@@ -1,6 +1,6 @@
 ### Configure paths. ###
 PROJECT_PATH := $(CURDIR)
-ENV_PATH := $(CURDIR)/filters_env
+ENV_PATH := $(CURDIR)/pyth_env
 PYTHON := $(ENV_PATH)/bin/python3.11
 TAG_NAME := DEPLOY
 TAG_DATE := $(TAG_NAME)_$(shell date -u "+%Y_%m_%d_%H_%M_%S")
@@ -26,9 +26,10 @@ pip: virtualenv
 clean:
 	find . -name '*.pyc' -delete
 
-diff_filters:
-	$(VENV) && python3 filters.py
-	
-verify_filter:
-	$(VENV) && python3 verify_filter.py
 
+lista_guango:
+	$(VENV) && python3 diff_guide_ebird.py --guide guango
+
+deploy:
+	scp -r dist/* guiguide@ssh-guiguide.alwaysdata.net:/home/guiguide/www/napo_birds/
+	git tag $(TAG_DATE); git push origin $(TAG_DATE) --no-verify

@@ -1,8 +1,6 @@
-make pip
-make diff_filters
 
-To verify the Azuay filter is working well:
-make verify_filter
 
-To get the infos:
-https://ebird.org/region/EC-A/bird-list => Save as azuay_list.html
+make lista_guango
+make deploy
+
+
