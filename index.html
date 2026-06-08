@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Aves de Napo</title>
+  <link rel="icon" href="files/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
@@ -44,7 +45,7 @@
     /* ── Floating feather decorations ── */
     .feather {
       position: fixed;
-      opacity: 0.04;
+      opacity: 0.44;
       pointer-events: none;
       z-index: 0;
       font-size: 120px;
@@ -303,6 +304,13 @@
       animation: bounce 1.5s ease-in-out infinite;
     }
 
+    .zozio {
+      height: 16px;
+      }
+      .zozio:hover {
+      filter: invert(46%) sepia(92%) saturate(491%) hue-rotate(49deg) brightness(97%) contrast(102%);
+      }
+
     @keyframes bounce {
       0%, 100% { transform: translateY(0); }
       50%       { transform: translateY(-6px); }
@@ -319,6 +327,11 @@
   <header>
     <div class="header-top">
       <h1>Aves de Napo</h1>
+      <div class="d-flex bg-dark text-light align-items-center px-3 py-2 w-100 justify-content-between">
+          <a href="https://guiguide.alwaysdata.net/" target="_blank" title="guiguide.alwaysdata.net"
+            ><img src="files/logo_guiguide.svg" class="zozio"></img>
+          </a>
+      </div>
     </div>
     <div class="divider"></div>
 
@@ -341,7 +354,6 @@
 
     <!-- Panels injected by JS -->
   </div>
-
 </div>
 
 <script>
