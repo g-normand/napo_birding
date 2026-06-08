@@ -29,15 +29,23 @@ args = parser.parse_args()
 
 guide = args.guide
 
-def extract_observation_dates(list_urls):
+def extract_observation_dates(list_hotposts):
     result = {}
-    for url in list_urls:
-        website = requests.get(f'{url}?hs_sortBy=taxon_order&hs_o=asc')   
+    photo_data = {}
+
+    for code_hotspot in list_hotposts:
+        api_json = requests.get(f'https://ebird.org/region/api/ml-search-api/highest-rating/distinct-species?mediaType=photo&regionCode={code_hotspot}&taxaLocale=en_US&aggregateHotspots=true').json()
+        for species_code in api_json:
+            photo_data[species_code] = api_json[species_code]['record']['ebirdChecklistId']
+
+
+        website = requests.get(f'https://ebird.org/hotspot/{code_hotspot}/bird-list?hs_sortBy=taxon_order&hs_o=asc')   
         soup = BeautifulSoup(website.text, 'html.parser')
         hotspot = soup.find('div', class_='PlaceTitle-name').find('h1').get_text(strip=True)
         
         for li in soup.find_all('li', class_='BirdList-list-list-item'):
             time_tag = li.find('time')
+            species_code = li.get('id')
             if time_tag and time_tag.has_attr('datetime'):
                 is_exotic = li.find('svg', class_='Icon--exoticEscapee') is not None
                 if is_exotic:
@@ -50,19 +58,30 @@ def extract_observation_dates(list_urls):
                 birder = birder_tag.get_text(strip=True) if birder_tag else None
                 last_seen = datetime.strptime(time_tag['datetime'], '%Y-%m-%d %H:%M')
                 checklist = li.find('div', class_='Obs-date').find('a').get('href')
+
+                has_photo = False
+                photo_checklist=None
+                if species_code in photo_data:
+                    has_photo = True
+                    photo_checklist = photo_data[species_code]
                 if name in result:
                     if last_seen > result[name]['last_seen']:
-                        #Newest
-                        result[name] = dict(
-                            where=hotspot,
-                            last_seen=last_seen,
-                            checklist=checklist,
-                            birder=birder)
+                        #Newest record
+                        result[name]['where'] = hotspot
+                        result[name]['last_seen'] = last_seen
+                        result[name]['checklist'] = checklist
+                        result[name]['birder'] = birder
+                    #Check for picture
+                    if result[name]['has_photo'] is False and has_photo:
+                        result[name]['has_photo'] = has_photo
+                        result[name]['photo_checklist'] = photo_checklist
                 else:
                     result[name] = dict(
                         where=hotspot,
                         last_seen=last_seen,
                         checklist=checklist,
+                        has_photo=has_photo,
+                        photo_checklist=photo_checklist,
                         birder=birder)
 
     return result
@@ -70,7 +89,7 @@ def extract_observation_dates(list_urls):
 
 if (guide == 'guango'):
     list_urls = [
-     'https://ebird.org/hotspot/L489428/bird-list', #Guango
+     'L489428', #Guango
     ]
     page_title = 'Lista Guango vs eBird'
     file_guide = "files/guia_guango.csv"
@@ -110,6 +129,20 @@ sorted_guide = sorted(only_in_guide.items(), key=lambda x: x[1]['order'])
 sorted_new_guide = sorted(new_in_guide.items(), key=lambda x: x[1]['last_seen'], reverse=True)
 sorted_guide_and_ebird = sorted(guide_and_ebird.items(), key=lambda x: x[1]['last_seen'], reverse=True)
 
+
+def info_to_html(info):
+    date_str = info['last_seen'].strftime('%d/%m/%Y')
+    birder   = info.get('birder') or '—'
+    where    = info.get('where') or '—'
+    checklist = info.get('checklist')
+    has_photo = info.get('has_photo')
+    photo_url = ''
+    if has_photo:
+        photo_url = f'<a href="https://ebird.org/checklist/{info.get("photo_checklist")}">{info.get("photo_checklist")}</a>'
+    return f"<tr><td>{species}</td><td><a href='{checklist}'>{date_str}</a></td><td>{where}</td><td>{birder}</td><td>{photo_url}</td></tr>\n"
+
+
+
 html = f"""<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -132,16 +165,11 @@ html = f"""<!DOCTYPE html>
 
   <h2>Solo en eBird <span class="badge">({len(only_in_ebird)} especies)</span></h2>
   <table>
-    <thead><tr><th>Especie</th><th>Último avistamiento</th><th>Hotspot</th><th>Observador</th></tr></thead>
+    <thead><tr><th>Especie</th><th>Último avistamiento</th><th>Hotspot</th><th>Observador</th><th>Photo URL</th></tr></thead>
     <tbody>
 """
 for species, info in sorted_ebird:
-    date_str = info['last_seen'].strftime('%d/%m/%Y')
-    birder   = info.get('birder') or '—'
-    where    = info.get('where') or '—'
-    checklist = info.get('checklist')
-    html += f"      <tr><td>{species}</td><td><a href='{checklist}'>{date_str}</a></td><td>{where}</td><td>{birder}</td></tr>\n"
-
+    html += info_to_html(info)
 
 if(len(only_in_guide)) > 0:
     html += f"""    </tbody>
@@ -162,16 +190,11 @@ if(len(new_in_guide)) > 0:
 
     <h2>Nuevo para la guía <span class="badge">({len(new_in_guide)} especies)</span></h2>
     <table>
-        <thead><tr><th>Especie</th><th>Último avistamiento</th><th>Hotspot</th><th>Observador</th></tr></thead>
+        <thead><tr><th>Especie</th><th>Último avistamiento</th><th>Hotspot</th><th>Observador</th><th>Photo URL</th></tr></thead>
         <tbody>
     """
     for species, info in sorted_new_guide:
-        date_str = info['last_seen'].strftime('%d/%m/%Y')
-        birder   = info.get('birder') or '—'
-        where    = info.get('where') or '—'
-        checklist = info.get('checklist')
-        html += f"      <tr><td>{species}</td><td><a href='{checklist}'>{date_str}</a></td><td>{where}</td><td>{birder}</td></tr>\n"
-
+        html += info_to_html(info)
 
 
 html += f"""    </tbody>
@@ -179,16 +202,11 @@ html += f"""    </tbody>
 
 <h2>En la guía y en eBird <span class="badge">({len(guide_and_ebird)} especies)</span></h2>
 <table>
-    <thead><tr><th>Especie</th><th>Último avistamiento</th><th>Hotspot</th><th>Observador</th></tr></thead>
+    <thead><tr><th>Especie</th><th>Último avistamiento</th><th>Hotspot</th><th>Observador</th><th>Photo?</th></tr></thead>
     <tbody>
 """
 for species, info in sorted_guide_and_ebird:
-    date_str = info['last_seen'].strftime('%d/%m/%Y')
-    birder   = info.get('birder') or '—'
-    where    = info.get('where') or '—'
-    checklist = info.get('checklist')
-    html += f"      <tr><td>{species}</td><td><a href='{checklist}'>{date_str}</a></td><td>{where}</td><td>{birder}</td></tr>\n"
-
+    html += info_to_html(info)
 
 html += """    </tbody>
   </table>
