@@ -26,10 +26,5 @@ pip: virtualenv
 clean:
 	find . -name '*.pyc' -delete
 
-
 lista_guango:
 	$(VENV) && python3 diff_guide_ebird.py --guide guango
-
-deploy:
-	scp -r dist/* guiguide@ssh-guiguide.alwaysdata.net:/home/guiguide/www/napo_birds/
-	git tag $(TAG_DATE); git push origin $(TAG_DATE) --no-verify

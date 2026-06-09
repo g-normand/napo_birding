@@ -1,6 +1,11 @@
+# Don't forget to add a precommit
+cp pre-commit .git/hooks/
+chmod +x .git/hooks/pre-commit
 
 
 make lista_guango
-make deploy
-
+git add dist/
+git push origin main
+# Will deploy automatically
+# Check info at https://github.com/g-normand/napo_birding/settings/pages
 

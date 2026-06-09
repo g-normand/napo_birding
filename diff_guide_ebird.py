@@ -157,6 +157,7 @@ html = f"""<!DOCTYPE html>
     th {{ background: #f0f7f0; }}
     tr:hover {{ background: #f9fdf9; }}
     .badge {{ font-size: 0.85em; color: #666; margin-left: 6px; }}
+    .guia_and_ebird_table{{ background-color: darkkhaki; }}
   </style>
 </head>
 <body>
@@ -201,7 +202,7 @@ html += f"""    </tbody>
 </table>
 
 <h2>En la guía y en eBird <span class="badge">({len(guide_and_ebird)} especies)</span></h2>
-<table>
+<table class="guia_and_ebird_table">
     <thead><tr><th>Especie</th><th>Último avistamiento</th><th>Hotspot</th><th>Observador</th><th>Photo?</th></tr></thead>
     <tbody>
 """
